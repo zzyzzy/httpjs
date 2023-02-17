@@ -6,8 +6,9 @@ class SungJuk {
         outFormat: oracledb.OUT_FORMAT_OBJECT
     };
 
-    selectsql = ' select sjno,name,kor,eng,mat,regdate from sungjuk ' +
-                ' order by sjno desc ';
+    selectsql = ` select sjno,name,kor,eng,mat, ` +
+                ` to_char(regdate, 'YYYY-MM-DD') regdate from sungjuk ` +
+                ` order by sjno desc `;
 
     // 생성자 정의 - 변수 초기화
     // 즉, 매개변수로 전달된 값을 클래스 멤버변수에 대입함
@@ -45,18 +46,19 @@ class SungJuk {
     async select() {
         let conn = null;
         let result = null;
+        let sjs = [];
 
         try {
             conn = await oracledb.makeConn();
-            result = await conn.execute(
-                        this.selectsql, [], this.options);
+            result = await conn.execute(this.selectsql, [], this.options);
 
             let rs = result.resultSet;
             let row = null;
             while((row = await rs.getRow())) {
-                result = new SungJuk(row[1],row[2],row[3],row[4]);
-                result.sjno = row[0];
-                result.regdate = row[5];
+                let sj = new SungJuk(row[1],row[2],row[3],row[4]);
+                sj.sjno = row[0];
+                sj.regdate = row[5];
+                sjs.push(sj);
             }
         } catch (e) {
             console.log(e);
@@ -64,7 +66,7 @@ class SungJuk {
             await oracledb.closeConn(conn);
         }
 
-        return await result;
+        return await sjs;
     }
 
     // 성적 상세조회
